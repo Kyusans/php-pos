@@ -16,13 +16,36 @@ class Products
 
   function updatePrice($json)
   {
-    // {"id":1001,"price":1000}
+    // {"product_id":1001,"price":1000}
     include "connection.php";
     $data = json_decode($json, true);
     $sql = "UPDATE tbl_products SET prod_price = :price WHERE prod_id = :id";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(":price", $data["price"]);
-    $stmt->bindParam(":id", $data["id"]);
+    $stmt->bindParam(":id", $data["product_id"]);
+    $stmt->execute();
+    return $stmt->rowCount() > 0 ? 1 : 0;
+  }
+
+  function addProduct($json)
+  {
+    // {"productName":"test","price":1000,"barcode":1011}
+    include "connection.php";
+    $data = json_decode($json, true);
+
+    if (recordExists($data["barcode"], "tbl_products", "prod_id")) {
+      // mo return siya og -1 if ang barcode already exist
+      return -1;
+    } else if (recordExists($data["productName"], "tbl_products", "prod_name")) {
+      // mo return siya og -2 if ang name already exist
+      return -2;
+    }
+
+    $sql = "INSERT INTO tbl_products (prod_id, prod_name, prod_price) VALUES (:id, :name, :price)";
+    $stmt = $conn->prepare($sql);
+    $stmt->bindParam(":name", $data["productName"]);
+    $stmt->bindParam(":price", $data["price"]);
+    $stmt->bindParam(":id", $data["barcode"]);
     $stmt->execute();
     return $stmt->rowCount() > 0 ? 1 : 0;
   }
@@ -50,6 +73,9 @@ switch ($operation) {
     break;
   case "updatePrice":
     echo $product->updatePrice($json);
+    break;
+  case "addProduct":
+    echo $product->addProduct($json);
     break;
   default:
     echo "Wala kay gi butang nga operation sa ubos HAHAHAHA bobo";
