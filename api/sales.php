@@ -45,14 +45,16 @@ class Sales
     }
   }
 
-  function getAllSalesWithDetails()
+  function getZReport()
   {
     include "connection.php";
     try {
-      $sql = "SELECT a.sale_id, a.sale_userId, a.sale_cashTendered, a.sale_change, a.sale_totalAmount, a.sale_date, 
+      $sql = "SELECT a.sale_id, d.user_fullname, a.sale_cashTendered, a.sale_change, a.sale_totalAmount, a.sale_date, 
       b.sale_item_productId, b.sale_item_quantity, b.sale_item_price, c.prod_name AS product_name FROM tbl_sales a 
       INNER JOIN tbl_sale_item b ON a.sale_id = b.sale_item_saleId 
       INNER JOIN tbl_products c ON b.sale_item_productId = c.prod_id 
+      INNER JOIN tbl_users d ON a.sale_userId = d.user_id 
+      WHERE a.sale_date = CURDATE() 
       ORDER BY a.sale_id, b.sale_item_productId";
       $stmt = $conn->prepare($sql);
       $stmt->execute();
@@ -65,8 +67,7 @@ class Sales
           $saleId = $row['sale_id'];
           if (!isset($sales[$saleId])) {
             $sales[$saleId] = [
-              'sale_id' => $row['sale_id'],
-              'sale_userId' => $row['sale_userId'],
+              'user_username' => $row['user_fullname'],
               'sale_cashTendered' => $row['sale_cashTendered'],
               'sale_change' => $row['sale_change'],
               'sale_totalAmount' => $row['sale_totalAmount'],
@@ -105,8 +106,8 @@ switch ($operation) {
   case "saveTransaction":
     echo $sales->saveTransaction($json);
     break;
-  case "getAllSalesWithDetails":
-    echo $sales->getAllSalesWithDetails();
+  case "getZReport":
+    echo $sales->getZReport();
     break;
   default:
     echo "Wala kay gi butang nga operation sa ubos HAHAHAHA bobo";
