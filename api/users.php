@@ -24,6 +24,17 @@ class User
     $stmt->execute();
     return $stmt->rowCount() > 0 ? json_encode($stmt->fetch(PDO::FETCH_ASSOC)) : 0;
   }
+
+  function updateBeginningBalance($json){
+    // {"amount":500}
+    include "connection.php";
+    $data = json_decode($json, true);
+    $sql = "UPDATE tbl_beginning_balance SET beginning_balance = :amount";
+    $stmt = $conn->prepare($sql);
+    $stmt->bindParam(":amount", $data["amount"]);
+    $stmt->execute();
+    return $stmt->rowCount() > 0 ? 1 : 0;
+  }
 } //user
 
 function recordExists($value, $table, $column)
@@ -48,6 +59,9 @@ switch ($operation) {
     break;
   case "getBeginningBalance":
     echo $user->getBeginningBalance();
+    break;
+  case "updateBeginningBalance":
+    echo $user->updateBeginningBalance($json);
     break;
   default:
     echo "Wala kay gi butang nga operation sa ubos HAHAHAHA bobo";
