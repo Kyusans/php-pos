@@ -1,0 +1,16 @@
+kaning comment ba, mao ning kailangan nga json kung mo gamit ka sa specific nga function
+for example sa login() sa users.php
+
+ function login($json)
+  {
+    // {"username":"joe","password":"joe"} <---- kani ba
+
+    // kunwari other codes diri
+  }
+  
+
+pero kung walay comment nga ing ani, meaning walay json kailangan eh hatag nimo
+
+
+
+ayawg kalimot og hatag sa operation ha, sus kabalo naman ka ana.
