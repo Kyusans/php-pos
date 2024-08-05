@@ -18,13 +18,12 @@
       // {"id":1001,"price":1000}
       include "connection.php";
       $data = json_decode($json, true);
-      $sql = "UPDATE tbl_products SET product_price = :price WHERE product_id = :id";
+      $sql = "UPDATE tbl_products SET prod_price = :price WHERE prod_id = :id";
       $stmt = $conn->prepare($sql);
       $stmt->bindParam(":price", $data["price"]);
       $stmt->bindParam(":id", $data["id"]);
       $stmt->execute();
-      $result = $stmt->rowCount();
-      return $result ? json_encode($result) : 0;
+      return $stmt->rowCount() > 0 ? 1 : 0;
     }
 
   } //user
