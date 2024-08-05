@@ -14,8 +14,15 @@ class User
     $stmt->bindParam(":username", $data["username"]);
     $stmt->bindParam(":password", $data["password"]);
     $stmt->execute();
-    $result = $stmt->fetch(PDO::FETCH_ASSOC);
-    return $result ? json_encode($result) : 0;
+    return $stmt->rowCount() > 0 ? json_encode($stmt->fetch(PDO::FETCH_ASSOC)) : 0;
+  }
+
+  function getBeginningBalance(){
+    include "connection.php";
+    $sql = "SELECT * FROM tbl_beginning_balance";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    return $stmt->rowCount() > 0 ? json_encode($stmt->fetch(PDO::FETCH_ASSOC)) : 0;
   }
 } //user
 
@@ -38,6 +45,9 @@ $user = new User();
 switch ($operation) {
   case "login":
     echo $user->login($json);
+    break;
+  case "getBeginningBalance":
+    echo $user->getBeginningBalance();
     break;
   default:
     echo "Wala kay gi butang nga operation sa ubos HAHAHAHA bobo";
