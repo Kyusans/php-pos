@@ -6,7 +6,7 @@
 
     function login($json)
     {
-      // {"username":"joe","password":"joejoejoe"}
+      // {"username":"joe","password":"joe"}
       include "connection.php";
       $data = json_decode($json, true);
       $sql = "SELECT * FROM tbl_users WHERE user_username = :username AND BINARY user_password = :password";
