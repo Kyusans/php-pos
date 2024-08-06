@@ -198,15 +198,27 @@ class Sales
             WHERE sale_date >= :firstDayOfMonth AND sale_date <= :lastDayOfMonth
             GROUP BY DATE(sale_date)
             ORDER BY DATE(sale_date)";
-
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(":firstDayOfMonth", $firstDayOfMonth);
     $stmt->bindParam(":lastDayOfMonth", $lastDayOfMonth);
     $stmt->execute();
+    return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+  }
 
-    $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    return json_encode($results);
+  function getBoughtProductsForThisMonth(){
+    include "connection.php";
+    $firstDayOfMonth = date('Y-m-01');
+    $lastDayOfMonth = date('Y-m-t');
+    $sql = "SELECT a.prod_name, SUM(b.sale_item_quantity) AS totalQuantity  FROM tbl_products a 
+            INNER JOIN tbl_sale_item b ON a.prod_id = b.sale_item_productId 
+            INNER JOIN tbl_sales c ON b.sale_item_saleId = c.sale_id
+            WHERE c.sale_date >= :firstDayOfMonth AND c.sale_date <= :lastDayOfMonth
+            GROUP BY b.sale_item_productId";
+    $stmt = $conn->prepare($sql);
+    $stmt->bindParam(":firstDayOfMonth", $firstDayOfMonth);
+    $stmt->bindParam(":lastDayOfMonth", $lastDayOfMonth);
+    $stmt->execute();
+    return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
   }
 } //user
 
@@ -236,6 +248,9 @@ switch ($operation) {
     break;
   case "getTotalAmountForCurrentMonth":
     echo $sales->getTotalAmountForCurrentMonth($json);
+    break;
+  case "getBoughtProductsForThisMonth":
+    echo $sales->getBoughtProductsForThisMonth($json);
     break;
   default:
     echo "Wala kay gi butang nga operation sa ubos HAHAHAHA bobo";
