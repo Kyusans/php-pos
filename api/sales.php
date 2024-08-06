@@ -6,7 +6,8 @@ class Sales
 
   function saveTransaction($json)
   {
-    // {"master":{"userId":1,"cashTendered":1000,"change":1000,"totalAmount":1000},"detail":[{"productId":1001,"quantity":10,"price":1000}, {"productId":1002,"quantity":10,"price":1000}]}
+    // {"master":{"userId":2,"cashTendered":2341,"change":1234,"totalAmount":123},
+    // "detail":[{"productId":1003,"quantity":2,"price":123123}, {"productId":1002,"quantity":10,"price":1000}]}
     include "connection.php";
     $json = json_decode($json, true);
     $master = $json["master"];
@@ -185,6 +186,28 @@ class Sales
       return json_encode(['error' => $e->getMessage()]);
     }
   }
+
+  function getTotalAmountForCurrentMonth()
+  {
+    include "connection.php";
+    $firstDayOfMonth = date('Y-m-01');
+    $lastDayOfMonth = date('Y-m-t');
+
+    $sql = "SELECT DATE(sale_date) AS date, SUM(sale_totalAmount) AS totalAmount 
+            FROM tbl_sales 
+            WHERE sale_date >= :firstDayOfMonth AND sale_date <= :lastDayOfMonth
+            GROUP BY DATE(sale_date)
+            ORDER BY DATE(sale_date)";
+
+    $stmt = $conn->prepare($sql);
+    $stmt->bindParam(":firstDayOfMonth", $firstDayOfMonth);
+    $stmt->bindParam(":lastDayOfMonth", $lastDayOfMonth);
+    $stmt->execute();
+
+    $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    return json_encode($results);
+  }
 } //user
 
 function getCurrentDate()
@@ -210,6 +233,9 @@ switch ($operation) {
     break;
   case "getZReportWithSelectedDate":
     echo $sales->getZReportWithSelectedDate($json);
+    break;
+  case "getTotalAmountForCurrentMonth":
+    echo $sales->getTotalAmountForCurrentMonth($json);
     break;
   default:
     echo "Wala kay gi butang nga operation sa ubos HAHAHAHA bobo";
