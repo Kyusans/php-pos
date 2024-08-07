@@ -150,7 +150,6 @@ class Sales
     }
   }
 
-
   function getShiftReport($json)
   {
     // {"userId":1, "from":"2024-08-02","to":"2024-08-03"}
@@ -237,6 +236,30 @@ class Sales
     $stmt->execute();
     return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
   }
+
+  function getThisMonthSales(){
+    include "connection.php";
+    $firstDayOfMonth = date('Y-m-01');
+    $lastDayOfMonth = date('Y-m-t');
+    $sql = "SELECT SUM(sale_totalAmount) AS totalAmount FROM tbl_sales WHERE sale_date >= :firstDayOfMonth AND sale_date <= :lastDayOfMonth";
+    $stmt = $conn->prepare($sql);
+    $stmt->bindParam(":firstDayOfMonth", $firstDayOfMonth);
+    $stmt->bindParam(":lastDayOfMonth", $lastDayOfMonth);
+    $stmt->execute();
+    return $stmt->rowCount() > 0 ? json_encode($stmt->fetchAll(PDO::FETCH_ASSOC)) : 0;
+  }
+
+  function getLastMonthSales(){
+    include "connection.php";
+    $firstDayOfLastMonth = date('Y-m-01', strtotime('-1 month'));
+    $lastDayOfLastMonth = date('Y-m-t', strtotime('-1 month'));
+    $sql = "SELECT SUM(sale_totalAmount) AS totalAmount FROM tbl_sales WHERE sale_date >= :firstDayOfLastMonth AND sale_date <= :lastDayOfLastMonth";
+    $stmt = $conn->prepare($sql);
+    $stmt->bindParam(":firstDayOfLastMonth", $firstDayOfLastMonth);
+    $stmt->bindParam(":lastDayOfLastMonth", $lastDayOfLastMonth);
+    $stmt->execute();
+    return $stmt->rowCount() > 0 ? json_encode($stmt->fetchAll(PDO::FETCH_ASSOC)) : 0;
+  }
 } //user
 
 function getCurrentDate()
@@ -268,6 +291,12 @@ switch ($operation) {
     break;
   case "getBoughtProductsForThisMonth":
     echo $sales->getBoughtProductsForThisMonth($json);
+    break;
+  case "getThisMonthSales":
+    echo $sales->getThisMonthSales($json);
+    break;
+  case "getLastMonthSales":
+    echo $sales->getLastMonthSales($json);
     break;
   default:
     echo "Wala kay gi butang nga operation sa ubos HAHAHAHA bobo";
