@@ -153,7 +153,7 @@ class Sales
 
   function getShiftReport($json)
   {
-    // {"userId":1}
+    // {"userId":1, "from":"2024-08-02","to":"2024-08-03"}
     include "connection.php";
     $json = json_decode($json, true);
     try {
@@ -162,10 +162,13 @@ class Sales
       INNER JOIN tbl_sale_item b ON a.sale_id = b.sale_item_saleId 
       INNER JOIN tbl_products c ON b.sale_item_productId = c.prod_id 
       INNER JOIN tbl_users d ON a.sale_userId = d.user_id 
-      WHERE d.user_id = :userId AND a.sale_date = CURDATE()
+      WHERE a.sale_userId = :userId AND DATE(a.sale_date) >= :from AND DATE(a.sale_date) <= :to
       ORDER BY a.sale_id, b.sale_item_productId";
       $stmt = $conn->prepare($sql);
       $stmt->bindParam(":userId", $json["userId"]);
+      $stmt->bindParam(":from", $json["from"]);
+      $stmt->bindParam(":to", $json["to"]);
+
       $stmt->execute();
 
       $sales = [];
@@ -176,6 +179,7 @@ class Sales
           $saleId = $row['sale_id'];
           if (!isset($sales[$saleId])) {
             $sales[$saleId] = [
+              'sale_id' => $row['sale_id'],
               'user_username' => $row['user_fullname'],
               'sale_cashTendered' => $row['sale_cashTendered'],
               'sale_change' => $row['sale_change'],

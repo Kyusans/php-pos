@@ -38,7 +38,7 @@ class User
 
   function getAllCashiers(){
     include "connection.php";
-    $sql = "SELECT * FROM tbl_users WHERE user_level = 'cashier'";
+    $sql = "SELECT * FROM tbl_users WHERE user_level = 'user'";
     $stmt = $conn->prepare($sql);
     $stmt->execute();
     return $stmt->rowCount() > 0 ? json_encode($stmt->fetchAll(PDO::FETCH_ASSOC)) : 0;
