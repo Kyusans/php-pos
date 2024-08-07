@@ -93,19 +93,30 @@ class Sales
 
   function getZReportWithSelectedDate($json)
   {
-    // {"date":"2024-08-06"}
+    // {"from":"2024-08-02","to":"2024-08-03"}
     include "connection.php";
     $json = json_decode($json, true);
+  
+    $fromDate = $json['from'];
+    $toDate = $json['to'];
+
+    // echo "from: " . $fromDate;
+    // echo "to: " . $toDate;
+    // die();
+
     try {
       $sql = "SELECT a.sale_id, d.user_fullname, a.sale_cashTendered, a.sale_change, a.sale_totalAmount, a.sale_date, 
-      b.sale_item_productId, b.sale_item_quantity, b.sale_item_price, c.prod_name AS product_name FROM tbl_sales a 
-      INNER JOIN tbl_sale_item b ON a.sale_id = b.sale_item_saleId 
-      INNER JOIN tbl_products c ON b.sale_item_productId = c.prod_id 
-      INNER JOIN tbl_users d ON a.sale_userId = d.user_id 
-      WHERE DATE(a.sale_date) = :date 
-      ORDER BY a.sale_date DESC";
+              b.sale_item_productId, b.sale_item_quantity, b.sale_item_price, c.prod_name AS product_name 
+              FROM tbl_sales a 
+              INNER JOIN tbl_sale_item b ON a.sale_id = b.sale_item_saleId 
+              INNER JOIN tbl_products c ON b.sale_item_productId = c.prod_id 
+              INNER JOIN tbl_users d ON a.sale_userId = d.user_id 
+              WHERE DATE(a.sale_date) >= :from AND DATE(a.sale_date) <= :to
+              ORDER BY a.sale_date DESC";
+
       $stmt = $conn->prepare($sql);
-      $stmt->bindParam(":date", $json["date"]);
+      $stmt->bindParam(":from", $fromDate);
+      $stmt->bindParam(":to", $toDate);
       $stmt->execute();
 
       $sales = [];
@@ -141,7 +152,7 @@ class Sales
 
   function getShiftReport($json)
   {
-    // {"userId":1}
+    // {"userId":1, "from":"2024-08-02","to":"2024-08-03"}
     include "connection.php";
     $json = json_decode($json, true);
     try {
@@ -150,10 +161,13 @@ class Sales
       INNER JOIN tbl_sale_item b ON a.sale_id = b.sale_item_saleId 
       INNER JOIN tbl_products c ON b.sale_item_productId = c.prod_id 
       INNER JOIN tbl_users d ON a.sale_userId = d.user_id 
-      WHERE d.user_id = :userId AND a.sale_date = CURDATE()
+      WHERE a.sale_userId = :userId AND DATE(a.sale_date) >= :from AND DATE(a.sale_date) <= :to
       ORDER BY a.sale_id, b.sale_item_productId";
       $stmt = $conn->prepare($sql);
       $stmt->bindParam(":userId", $json["userId"]);
+      $stmt->bindParam(":from", $json["from"]);
+      $stmt->bindParam(":to", $json["to"]);
+
       $stmt->execute();
 
       $sales = [];
@@ -164,6 +178,7 @@ class Sales
           $saleId = $row['sale_id'];
           if (!isset($sales[$saleId])) {
             $sales[$saleId] = [
+              'sale_id' => $row['sale_id'],
               'user_username' => $row['user_fullname'],
               'sale_cashTendered' => $row['sale_cashTendered'],
               'sale_change' => $row['sale_change'],
@@ -205,11 +220,12 @@ class Sales
     return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
   }
 
-  function getBoughtProductsForThisMonth(){
+  function getBoughtProductsForThisMonth()
+  {
     include "connection.php";
     $firstDayOfMonth = date('Y-m-01');
     $lastDayOfMonth = date('Y-m-t');
-    $sql = "SELECT a.prod_name, SUM(b.sale_item_quantity) AS totalQuantity  FROM tbl_products a 
+    $sql = "SELECT a.prod_name, SUM(b.sale_item_quantity) AS Sold  FROM tbl_products a 
             INNER JOIN tbl_sale_item b ON a.prod_id = b.sale_item_productId 
             INNER JOIN tbl_sales c ON b.sale_item_saleId = c.sale_id
             WHERE c.sale_date >= :firstDayOfMonth AND c.sale_date <= :lastDayOfMonth
@@ -219,6 +235,30 @@ class Sales
     $stmt->bindParam(":lastDayOfMonth", $lastDayOfMonth);
     $stmt->execute();
     return json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+  }
+
+  function getThisMonthSales(){
+    include "connection.php";
+    $firstDayOfMonth = date('Y-m-01');
+    $lastDayOfMonth = date('Y-m-t');
+    $sql = "SELECT SUM(sale_totalAmount) AS totalAmount FROM tbl_sales WHERE sale_date >= :firstDayOfMonth AND sale_date <= :lastDayOfMonth";
+    $stmt = $conn->prepare($sql);
+    $stmt->bindParam(":firstDayOfMonth", $firstDayOfMonth);
+    $stmt->bindParam(":lastDayOfMonth", $lastDayOfMonth);
+    $stmt->execute();
+    return $stmt->rowCount() > 0 ? json_encode($stmt->fetchAll(PDO::FETCH_ASSOC)) : 0;
+  }
+
+  function getLastMonthSales(){
+    include "connection.php";
+    $firstDayOfLastMonth = date('Y-m-01', strtotime('-1 month'));
+    $lastDayOfLastMonth = date('Y-m-t', strtotime('-1 month'));
+    $sql = "SELECT SUM(sale_totalAmount) AS totalAmount FROM tbl_sales WHERE sale_date >= :firstDayOfLastMonth AND sale_date <= :lastDayOfLastMonth";
+    $stmt = $conn->prepare($sql);
+    $stmt->bindParam(":firstDayOfLastMonth", $firstDayOfLastMonth);
+    $stmt->bindParam(":lastDayOfLastMonth", $lastDayOfLastMonth);
+    $stmt->execute();
+    return $stmt->rowCount() > 0 ? json_encode($stmt->fetchAll(PDO::FETCH_ASSOC)) : 0;
   }
 } //user
 
@@ -251,6 +291,12 @@ switch ($operation) {
     break;
   case "getBoughtProductsForThisMonth":
     echo $sales->getBoughtProductsForThisMonth($json);
+    break;
+  case "getThisMonthSales":
+    echo $sales->getThisMonthSales($json);
+    break;
+  case "getLastMonthSales":
+    echo $sales->getLastMonthSales($json);
     break;
   default:
     echo "Wala kay gi butang nga operation sa ubos HAHAHAHA bobo";

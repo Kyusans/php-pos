@@ -35,6 +35,14 @@ class User
     $stmt->execute();
     return $stmt->rowCount() > 0 ? 1 : 0;
   }
+
+  function getAllCashiers(){
+    include "connection.php";
+    $sql = "SELECT * FROM tbl_users WHERE user_level = 'user'";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    return $stmt->rowCount() > 0 ? json_encode($stmt->fetchAll(PDO::FETCH_ASSOC)) : 0;
+  }
 } //user
 
 function recordExists($value, $table, $column)
@@ -62,6 +70,9 @@ switch ($operation) {
     break;
   case "updateBeginningBalance":
     echo $user->updateBeginningBalance($json);
+    break;
+  case "getAllCashiers":
+    echo $user->getAllCashiers();
     break;
   default:
     echo "Wala kay gi butang nga operation sa ubos HAHAHAHA bobo";

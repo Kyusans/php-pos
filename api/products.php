@@ -14,13 +14,13 @@ class Products
     return $result ? json_encode($result) : 0;
   }
 
-  function updatePrice($json)
-  {
-    // {"product_id":1001,"price":1000}
+  function updateProduct($json){
+    // {"product_id":1001, "productName":"test","price":1000}
     include "connection.php";
     $data = json_decode($json, true);
-    $sql = "UPDATE tbl_products SET prod_price = :price WHERE prod_id = :id";
+    $sql = "UPDATE tbl_products SET prod_name = :name, prod_price = :price WHERE prod_id = :id";
     $stmt = $conn->prepare($sql);
+    $stmt->bindParam(":name", $data["productName"]);
     $stmt->bindParam(":price", $data["price"]);
     $stmt->bindParam(":id", $data["product_id"]);
     $stmt->execute();
@@ -71,11 +71,11 @@ switch ($operation) {
   case "getAllProduct":
     echo $product->getAllProduct();
     break;
-  case "updatePrice":
-    echo $product->updatePrice($json);
-    break;
   case "addProduct":
     echo $product->addProduct($json);
+    break;
+  case "updateProduct":
+    echo $product->updateProduct($json);
     break;
   default:
     echo "Wala kay gi butang nga operation sa ubos HAHAHAHA bobo";
